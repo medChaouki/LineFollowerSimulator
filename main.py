@@ -17,6 +17,7 @@ class Car:
   def __init__(self,x,y):
     self.x =x
     self.y =y
+    self.length = 100
     self.trackWidth = 50
     self.rotation = 0
     self.img = CAR_IMG
@@ -40,6 +41,38 @@ class Car:
     #print("self.rotation")
     #print(self.rotation)
 
+  def getCenter(self):
+    return self.img.get_rect(topleft = (int(self.x),int(self.y))).center
+
+  def getFrontLeftCar(self):
+    returnVal=(0,0)
+    #x= self.getCenter()[0]+(self.length)/2
+    #y =self.getCenter()[1]-(self.trackWidth)/2
+    x=  (self.length)/2
+    y= -(self.trackWidth)/2
+    teta = math.radians(self.rotation)
+    x1=(x*math.cos(teta)-y*math.sin(teta))
+    y1=(x*math.sin(teta)+y*math.cos(teta)) 
+    x1+=self.getCenter()[0]
+    y1+=self.getCenter()[1]
+    returnVal=x1,y1
+    return returnVal
+
+  def getFrontRightCar(self):
+    returnVal=(0,0)
+    #x= self.getCenter()[0]+(self.length)/2
+    #y =self.getCenter()[1]+(self.trackWidth)/2
+    x=  (self.length)/2
+    y=  (self.trackWidth)/2
+    teta = math.radians(self.rotation)
+    x1=(x*math.cos(teta)-y*math.sin(teta))
+    y1=(x*math.sin(teta)+y*math.cos(teta)) 
+    x1+=self.getCenter()[0]
+    y1+=self.getCenter()[1]
+    returnVal=x1,y1
+    return returnVal
+
+
   def advance(self,distance):
     self.x += distance* math.cos(math.radians(self.rotation))
     self.y += distance* math.sin(math.radians(self.rotation))
@@ -53,14 +86,18 @@ class Car:
       turningRadius = -(self.trackWidth/2)*((dRight+dLeft)/(dRight-dLeft))
 
     deltaAngle = math.degrees(-(dRight-dLeft)/self.trackWidth)
-    print("deltaAngle")
-    print(deltaAngle)
+    #print("deltaAngle")
+    #print(deltaAngle)
 
     self.rotateCar(deltaAngle)
     self.advance(d)
 
 
   def draw(self,win):
+    print("--------------")
+    print(self.getCenter())
+    print(self.getFrontLeftCar())
+    print(self.getFrontRightCar())
     win.blit(self.img, (self.x, self.y))
 
 
@@ -68,7 +105,14 @@ def draw_window(win,car):
   
   win.blit(BG_IMG, (0, 0))
   car.draw(win)
+
+
+
+  pygame.draw.line(win,(255,0,0),car.getFrontLeftCar(),car.getFrontRightCar(),10)
   pygame.display.update()
+
+#def getSensorLinePosition(car):
+
 
 def main():
   car= Car(0,50)
