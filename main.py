@@ -6,11 +6,11 @@ import random
 import pickle
 import math
 
-WIN_WIDTH = 1000
-WIN_HEIGHT = 1000
+WIN_WIDTH = 700
+WIN_HEIGHT = 700
 
 CAR_IMG = pygame.transform.rotate(pygame.transform.scale(pygame.image.load(os.path.join("imgs","mustang.png")),(50,100)),-90)
-BG_IMG = pygame.transform.scale(pygame.image.load(os.path.join("imgs","BG.png")),(3000,3000))
+BG_IMG = pygame.transform.scale(pygame.image.load(os.path.join("imgs","BG.png")),(700,700))
 
 class Car:
 
@@ -18,10 +18,12 @@ class Car:
     self.x =x
     self.y =y
     self.length = 100
+    self.SensorsWidth = 50
     self.trackWidth = 50
     self.rotation = 0
     self.img = CAR_IMG
     self.originalImg = self.img
+    self.distanceTraveled  =0
 
   def rotateCar(self,rotAngle):
     self.rotation += rotAngle
@@ -38,40 +40,88 @@ class Car:
     self.img = rotated_image
     self.x = (new_rect.topleft[0])
     self.y = (new_rect.topleft[1])
-    #print("self.rotation")
-    #print(self.rotation)
 
   def getCenter(self):
+
     return self.img.get_rect(topleft = (int(self.x),int(self.y))).center
 
-  def getFrontLeftCar(self):
+  def getFrontLeftCarSensorPosition(self):
     returnVal=(0,0)
-    #x= self.getCenter()[0]+(self.length)/2
-    #y =self.getCenter()[1]-(self.trackWidth)/2
     x=  (self.length)/2
-    y= -(self.trackWidth)/2
+    y= -(self.SensorsWidth)/2
     teta = math.radians(self.rotation)
     x1=(x*math.cos(teta)-y*math.sin(teta))
     y1=(x*math.sin(teta)+y*math.cos(teta)) 
     x1+=self.getCenter()[0]
     y1+=self.getCenter()[1]
-    returnVal=x1,y1
+    returnVal=int(x1),int(y1)
     return returnVal
 
-  def getFrontRightCar(self):
+  def getFrontCenterLeftCarSensorPosition(self):
     returnVal=(0,0)
-    #x= self.getCenter()[0]+(self.length)/2
-    #y =self.getCenter()[1]+(self.trackWidth)/2
     x=  (self.length)/2
-    y=  (self.trackWidth)/2
+    y= -(self.SensorsWidth)*1/4
     teta = math.radians(self.rotation)
     x1=(x*math.cos(teta)-y*math.sin(teta))
     y1=(x*math.sin(teta)+y*math.cos(teta)) 
     x1+=self.getCenter()[0]
     y1+=self.getCenter()[1]
-    returnVal=x1,y1
+    returnVal=int(x1),int(y1)
     return returnVal
 
+  def getFrontRightCarSensorPosition(self):
+    returnVal=(0,0)
+    x=  (self.length)/2
+    y=  (self.SensorsWidth)/2
+    teta = math.radians(self.rotation)
+    x1=(x*math.cos(teta)-y*math.sin(teta))
+    y1=(x*math.sin(teta)+y*math.cos(teta)) 
+    x1+=self.getCenter()[0]
+    y1+=self.getCenter()[1]
+    returnVal=int(x1),int(y1)
+    return returnVal
+
+  def getFrontCenterRightCarSensorPosition(self):
+    returnVal=(0,0)
+    x=  (self.length)/2
+    y=  (self.SensorsWidth)*1/4
+    teta = math.radians(self.rotation)
+    x1=(x*math.cos(teta)-y*math.sin(teta))
+    y1=(x*math.sin(teta)+y*math.cos(teta)) 
+    x1+=self.getCenter()[0]
+    y1+=self.getCenter()[1]
+    returnVal=int(x1),int(y1)
+    return returnVal
+
+  def getFrontCenterCarSensorPosition(self):
+    returnVal=(0,0)
+    x=  (self.length)/2
+    y=  0
+    teta = math.radians(self.rotation)
+    x1=(x*math.cos(teta)-y*math.sin(teta))
+    y1=(x*math.sin(teta)+y*math.cos(teta)) 
+    x1+=self.getCenter()[0]
+    y1+=self.getCenter()[1]
+    returnVal=int(x1),int(y1)
+    return returnVal
+
+  def getCarSensorValue(self,sensorPosition):
+    returnVal=0
+    startX = sensorPosition[0]-3
+    endX = sensorPosition[0]+3
+    startY = sensorPosition[1]-3
+    endY = sensorPosition[1]+3
+    for x in range(startX,endX):
+      for y in range(startY,endY):
+        if (BG_IMG.get_at((x,y))==(0,0,0,255)):
+          returnVal = 1
+          break
+
+    return returnVal
+
+  def getDistance(self):
+
+    return self.distanceTraveled 
 
   def advance(self,distance):
     self.x += distance* math.cos(math.radians(self.rotation))
@@ -86,32 +136,33 @@ class Car:
       turningRadius = -(self.trackWidth/2)*((dRight+dLeft)/(dRight-dLeft))
 
     deltaAngle = math.degrees(-(dRight-dLeft)/self.trackWidth)
-    #print("deltaAngle")
-    #print(deltaAngle)
-
     self.rotateCar(deltaAngle)
     self.advance(d)
+    self.distanceTraveled += d
 
+  def drawSensors(self,win):
+    pygame.draw.line(win,(255,25,0),self.getFrontLeftCarSensorPosition(),self.getFrontRightCarSensorPosition(),10)
+    pygame.draw.circle(win,(0,0,255),self.getFrontLeftCarSensorPosition(),3,3)
+    pygame.draw.circle(win,(0,0,255),self.getFrontRightCarSensorPosition(),3,3)
+    pygame.draw.circle(win,(0,0,255),self.getFrontCenterCarSensorPosition(),3,3)
+    pygame.draw.circle(win,(0,0,255),self.getFrontCenterLeftCarSensorPosition(),3,3)
+    pygame.draw.circle(win,(0,0,255),self.getFrontCenterRightCarSensorPosition(),3,3)
 
   def draw(self,win):
-    print("--------------")
-    print(self.getCenter())
-    print(self.getFrontLeftCar())
-    print(self.getFrontRightCar())
     win.blit(self.img, (self.x, self.y))
+    self.drawSensors(win)
+
+    
+
 
 
 def draw_window(win,car):
   
   win.blit(BG_IMG, (0, 0))
   car.draw(win)
-
-
-
-  pygame.draw.line(win,(255,0,0),car.getFrontLeftCar(),car.getFrontRightCar(),10)
+  print(car.getDistance())
   pygame.display.update()
 
-#def getSensorLinePosition(car):
 
 
 def main():
@@ -131,19 +182,19 @@ def main():
     keyPressed = pygame.key.get_pressed()
     if (keyPressed[pygame.K_LEFT] ==True):
       #car.rotateCar(-10)
-      car.move(0,10)
+      car.move(0,5)
     elif (keyPressed[pygame.K_RIGHT] ==True):
       #car.rotateCar(10)
-      car.move(10,0)
+      car.move(5,0)
     if(keyPressed[pygame.K_UP] ==True ):
       #car.advance(10)
-      car.move(10,10)
+      car.move(5,5)
     elif (keyPressed[pygame.K_DOWN] ==True):
       #car.advance(-10)
-      car.move(-10,-10)
+      car.move(-5,-5)
     elif (keyPressed[pygame.K_SPACE] ==True):
       #car.advance(-10)
-      car.move(10,-10)
+      car.move(5,-5)
 
 
 
