@@ -35,11 +35,11 @@ class Car:
       self.rotation = -self.rotation
 
     rotated_image = pygame.transform.rotate(self.originalImg, -self.rotation)
-    old_rect = self.img.get_rect(topleft = (int(self.x),int(self.y)))
+    old_rect = self.img.get_rect(topleft = ((self.x),(self.y)))
     new_rect = rotated_image.get_rect(center=old_rect.center)
     self.img = rotated_image
-    self.x = (new_rect.topleft[0])
-    self.y = (new_rect.topleft[1])
+    self.x = float(new_rect.topleft[0])
+    self.y = float(new_rect.topleft[1])
 
   def getCenter(self):
 
@@ -121,16 +121,28 @@ class Car:
 
   def getDistance(self):
 
-    return self.distanceTraveled 
+    return self.distanceTraveled
 
   def advance(self,distance):
-    self.x += distance* math.cos(math.radians(self.rotation))
-    self.y += distance* math.sin(math.radians(self.rotation))
+    dx= distance* (math.cos(math.radians(self.rotation)))
+    dy= distance* (math.sin(math.radians(self.rotation)))
+    if (dx >0):
+      dx = math.ceil(dx)
+    else:
+      dx = - (math.ceil(-dx))
+    if (dy >0):
+      dy = math.ceil(dy)
+    else:
+      dy = - (math.ceil(-dy))
+    self.x = round(self.x,2) + round(dx,2)
+    self.y = round(self.y,2) + round(dy,2)
+    print(self.x)
+    print(self.y)
 
   def move(self,dLeft,dRight):
     d= (dLeft+dRight)/2
 
-    if abs(dRight-dLeft)<0.001:
+    if abs(dRight-dLeft)<0.0001:
       turningRadius = 9999999999
     else:
       turningRadius = -(self.trackWidth/2)*((dRight+dLeft)/(dRight-dLeft))
@@ -159,14 +171,17 @@ class Car:
 def draw_window(win,car):
   
   win.blit(BG_IMG, (0, 0))
+  pygame.draw.rect(win,(50,0,0),car.img.get_rect(topleft=(car.x,car.y)))
   car.draw(win)
-  print(car.getDistance())
+  #print("------------")
+  #print(pygame.mouse.get_pos())
+  #print((car.x,car.y))
   pygame.display.update()
 
 
 
 def main():
-  car= Car(0,50)
+  car= Car(0.0,50.0)
   win = pygame.display.set_mode((WIN_WIDTH,WIN_HEIGHT))
   clock = pygame.time.Clock()
   run = True
@@ -181,19 +196,14 @@ def main():
 
     keyPressed = pygame.key.get_pressed()
     if (keyPressed[pygame.K_LEFT] ==True):
-      #car.rotateCar(-10)
       car.move(0,5)
     elif (keyPressed[pygame.K_RIGHT] ==True):
-      #car.rotateCar(10)
       car.move(5,0)
     if(keyPressed[pygame.K_UP] ==True ):
-      #car.advance(10)
-      car.move(5,5)
+      car.move(2,2)
     elif (keyPressed[pygame.K_DOWN] ==True):
-      #car.advance(-10)
-      car.move(-5,-5)
+      car.move(-2,-2)
     elif (keyPressed[pygame.K_SPACE] ==True):
-      #car.advance(-10)
       car.move(5,-5)
 
 
