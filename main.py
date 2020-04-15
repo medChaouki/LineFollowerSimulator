@@ -10,7 +10,9 @@ WIN_WIDTH = 700
 WIN_HEIGHT = 700
 
 CAR_IMG = pygame.transform.rotate(pygame.transform.scale(pygame.image.load(os.path.join("imgs","mustang.png")),(50,100)),-90)
-BG_IMG = pygame.transform.scale(pygame.image.load(os.path.join("imgs","BG.png")),(700,700))
+TRACK_IMG = pygame.transform.scale(pygame.image.load(os.path.join("imgs","BG.png")),(700,700))
+
+END_OF_LINE_COLOR =(0,255,0,255)
 
 class Car:
 
@@ -23,7 +25,10 @@ class Car:
     self.rotation = 0
     self.img = CAR_IMG
     self.originalImg = self.img
+    self.carSensorPositions=[self.getFrontLeftCarSensorPosition(),self.getFrontCenterLeftCarSensorPosition()
+                             ,self.getFrontCenterCarSensorPosition(),self.getFrontCenterRightCarSensorPosition(),self.getFrontRightCarSensorPosition()]
     self.distanceTraveled  =0
+
 
   def rotateCar(self,rotAngle):
     self.rotation += rotAngle
@@ -113,10 +118,26 @@ class Car:
     endY = sensorPosition[1]+3
     for x in range(startX,endX):
       for y in range(startY,endY):
-        if (BG_IMG.get_at((x,y))==(0,0,0,255)):
+        if (TRACK_IMG.get_at((x,y))==(0,0,0,255)):
           returnVal = 1
           break
 
+    return returnVal
+
+  def isCarIsOutOfLine(self):
+    returnVal = True
+    for p in self.carSensorPositions:
+      if self.getCarSensorValue(p) == 1:
+        returnVal = False
+        break
+    return returnVal
+
+  def isCarIsAtTheFinishLine(self):
+    returnVal = False
+    for p in self.carSensorPositions:
+      if (TRACK_IMG.get_at(p)== END_OF_LINE_COLOR):
+        returnVal = True
+        break
     return returnVal
 
   def getDistance(self):
@@ -126,18 +147,22 @@ class Car:
   def advance(self,distance):
     dx= distance* (math.cos(math.radians(self.rotation)))
     dy= distance* (math.sin(math.radians(self.rotation)))
-    if (dx >0):
+
+    if (abs(dx)<0.3):
+      dx = 0
+    elif (dx >0):
       dx = math.ceil(dx)
     else:
-      dx = - (math.ceil(-dx))
-    if (dy >0):
+      dx = (math.floor(dx))
+
+    if (abs(dy)<0.3):
+      dy = 0
+    elif (dy >0):
       dy = math.ceil(dy)
     else:
-      dy = - (math.ceil(-dy))
+      dy = (math.floor(dy))
     self.x = round(self.x,2) + round(dx,2)
     self.y = round(self.y,2) + round(dy,2)
-    print(self.x)
-    print(self.y)
 
   def move(self,dLeft,dRight):
     d= (dLeft+dRight)/2
@@ -151,6 +176,8 @@ class Car:
     self.rotateCar(deltaAngle)
     self.advance(d)
     self.distanceTraveled += d
+    self.carSensorPositions=[self.getFrontLeftCarSensorPosition(),self.getFrontCenterLeftCarSensorPosition()
+                             ,self.getFrontCenterCarSensorPosition(),self.getFrontCenterRightCarSensorPosition(),self.getFrontRightCarSensorPosition()]
 
   def drawSensors(self,win):
     pygame.draw.line(win,(255,25,0),self.getFrontLeftCarSensorPosition(),self.getFrontRightCarSensorPosition(),10)
@@ -170,12 +197,9 @@ class Car:
 
 def draw_window(win,car):
   
-  win.blit(BG_IMG, (0, 0))
-  pygame.draw.rect(win,(50,0,0),car.img.get_rect(topleft=(car.x,car.y)))
+  win.blit(TRACK_IMG, (0, 0))
   car.draw(win)
-  #print("------------")
-  #print(pygame.mouse.get_pos())
-  #print((car.x,car.y))
+
   pygame.display.update()
 
 
