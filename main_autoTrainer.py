@@ -297,7 +297,7 @@ def trainingFunction(genomes, config):
           if(car.outOfTrack()==True):
             car.deactivate()
           elif (car.isCarIsAtTheFinishLine()== True):
-            ge[indexC].fitness += FINISH_BONUS+((MAX_TIME-timeCounter)*10)
+            ge[indexC].fitness += FINISH_BONUS+(pow(MAX_TIME-timeCounter,2))
             car.deactivate()
           elif (car.isCarIsOutOfLine() == True ):
             car.incrementOutOfLineDetection()
@@ -337,15 +337,21 @@ def run(config_file):
     p.add_reporter(neat.Checkpointer(5))
 
     # Run for up to 50 generations.
-    winner = p.run(trainingFunction, 10)
+    winner = p.run(trainingFunction, 50)
 
     # Display the winning genome.
     print('\nBest genome:\n{!s}'.format(winner))
 
-    #node_names = {-1:'A', -2: 'B', 0:'A XOR B'}
     visualize.draw_net(config, winner, True)
     visualize.plot_stats(stats, ylog=False, view=True)
     visualize.plot_species(stats, view=True)
+
+    winner_net = neat.nn.FeedForwardNetwork.create(winner, config)
+  
+    with open ('backupFile','wb') as backupFile :
+
+      pickle.dump( winner_net, backupFile )
+
 
 if __name__ == '__main__':
     # Determine path to configuration file. This path manipulation is
