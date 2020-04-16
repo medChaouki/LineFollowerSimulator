@@ -1,0 +1,5 @@
+__pycache__
+*.svg
+*.gv
+*neat-checkpoint-*
+backupFile
