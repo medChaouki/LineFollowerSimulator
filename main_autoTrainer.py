@@ -5,6 +5,10 @@ import os
 import random
 import pickle
 import math
+import visualize
+
+pygame.font.init()
+STAT_FONT = pygame.font.SysFont("comicsans",50)
 
 WIN_WIDTH = 700
 WIN_HEIGHT = 700
@@ -13,6 +17,16 @@ CAR_IMG = pygame.transform.rotate(pygame.transform.scale(pygame.image.load(os.pa
 TRACK_IMG = pygame.transform.scale(pygame.image.load(os.path.join("imgs","BG.png")),(700,700))
 
 END_OF_LINE_COLOR =(0,255,0,255)
+
+MAX_OUT_OF_LINE = 10
+
+OUT_OF_LINE_PENALTY = 1
+
+FINISH_BONUS = 1000
+
+MAX_TIME_IN_SECONDS = 10
+FPS = 30
+MAX_TIME = MAX_TIME_IN_SECONDS*(FPS) 
 
 class Car:
 
@@ -27,15 +41,35 @@ class Car:
     self.originalImg = self.img
     self.carSensorPositions=[self.getFrontLeftCarSensorPosition(),self.getFrontCenterLeftCarSensorPosition()
                              ,self.getFrontCenterCarSensorPosition(),self.getFrontCenterRightCarSensorPosition(),self.getFrontRightCarSensorPosition()]
-    self.distanceTraveled  =0
+    self.lastDistance  =0
+    self.nbOfOutOfLineDetection = 0
+    self.isActive = True
 
   def outOfTrack(self):
     trackRect =  TRACK_IMG.get_rect(topleft =(0,0))
     carRect = self.img.get_rect(topleft = ((self.x),(self.y)))
+    carRect = carRect.inflate(12,12)
     if trackRect.contains(carRect) == True:
       return False
     else:
       return True
+
+  def incrementOutOfLineDetection(self):
+
+    self.nbOfOutOfLineDetection +=1
+
+  def getOutOfLineDetection(self):
+
+    return self.nbOfOutOfLineDetection 
+
+  def isTheCarActive(self):
+
+    return self.isActive
+
+  def deactivate(self):
+
+    self.isActive = False
+
   def rotateCar(self,rotAngle):
     self.rotation += rotAngle
     if (self.rotation >0):
@@ -146,9 +180,9 @@ class Car:
         break
     return returnVal
 
-  def getDistance(self):
+  def getLastDistance(self):
 
-    return self.distanceTraveled
+    return self.lastDistance
 
   def advance(self,distance):
     dx= distance* (math.cos(math.radians(self.rotation)))
@@ -181,7 +215,7 @@ class Car:
     deltaAngle = math.degrees(-(dRight-dLeft)/self.trackWidth)
     self.rotateCar(deltaAngle)
     self.advance(d)
-    self.distanceTraveled += d
+    self.lastDistance = d
     self.carSensorPositions=[self.getFrontLeftCarSensorPosition(),self.getFrontCenterLeftCarSensorPosition()
                              ,self.getFrontCenterCarSensorPosition(),self.getFrontCenterRightCarSensorPosition(),self.getFrontRightCarSensorPosition()]
 
@@ -194,53 +228,129 @@ class Car:
     pygame.draw.circle(win,(0,0,255),self.getFrontCenterRightCarSensorPosition(),3,3)
 
   def draw(self,win):
-    
     win.blit(self.img, (self.x, self.y))
     self.drawSensors(win)
-    print(self.outOfTrack())
 
     
 
 
 
-def draw_window(win,car):
+def draw_window(win,cars,timeValue):
+  
+  text = STAT_FONT.render("Score: "+str(timeValue),1,(0,0,0))
   
   win.blit(TRACK_IMG, (0, 0))
-  car.draw(win)
+  win.blit(text, (10,10))
+  
+
+  for car in cars:
+    car.draw(win)
 
   pygame.display.update()
 
 
 
-def main():
-  car= Car(0.0,50.0)
+def trainingFunction(genomes, config):
   win = pygame.display.set_mode((WIN_WIDTH,WIN_HEIGHT))
   clock = pygame.time.Clock()
   run = True
-  keyNotPressedBefore = False
-  while run :
-    clock.tick(40)
+  ge=[]
+  nets=[]
+  cars=[]
+  timeCounter = 0
+
+  for _,g in genomes:
+    net = neat.nn.FeedForwardNetwork.create(g, config)
+    nets.append(net)
+    cars.append(Car(30,50))
+    g.fitness = 0
+    ge.append(g)
+
+  while (run == True):
+    clock.tick(FPS)
+    timeCounter+=1
+
     for event in pygame.event.get():
       if event.type == pygame.QUIT:
-          run = False
-          pygame.quit()
-          quit()
-
+        run = False
+        pygame.quit()
+        quit() 
     keyPressed = pygame.key.get_pressed()
-    if (keyPressed[pygame.K_LEFT] ==True):
-      car.move(0,5)
-    elif (keyPressed[pygame.K_RIGHT] ==True):
-      car.move(5,0)
-    if(keyPressed[pygame.K_UP] ==True ):
-      car.move(2,2)
-    elif (keyPressed[pygame.K_DOWN] ==True):
-      car.move(-2,-2)
-    elif (keyPressed[pygame.K_SPACE] ==True):
-      car.move(5,-5)
+    if (keyPressed[pygame.K_ESCAPE] ==True):
+      run = False
+    if (timeCounter>=MAX_TIME):
+      run = False
+
+    if (len(cars)>0):
+      for indexC,car in enumerate(cars):
+        if(car.outOfTrack()==True):
+          car.deactivate()
+        else:
+          output = nets[indexC].activate((car.getCarSensorValue(car.carSensorPositions[0]),
+                    car.getCarSensorValue(car.carSensorPositions[1]),
+                    car.getCarSensorValue(car.carSensorPositions[2]),
+                    car.getCarSensorValue(car.carSensorPositions[3]),
+                    car.getCarSensorValue(car.carSensorPositions[4])))
+          car.move(output[0]*10,output[1]*10)
+          ge[indexC].fitness += car.getLastDistance()
+
+          if(car.outOfTrack()==True):
+            car.deactivate()
+          elif (car.isCarIsAtTheFinishLine()== True):
+            ge[indexC].fitness += FINISH_BONUS+((MAX_TIME-timeCounter)*10)
+            car.deactivate()
+          elif (car.isCarIsOutOfLine() == True ):
+            car.incrementOutOfLineDetection()
+            ge[indexC].fitness -= OUT_OF_LINE_PENALTY
+            if(car.getOutOfLineDetection()>MAX_OUT_OF_LINE):
+              car.deactivate()
+          else:
+            #do nothing
+            pass
+
+      for indexC,car in enumerate(cars):
+        if (car.isTheCarActive() == False):
+          cars.pop(indexC)
+          nets.pop(indexC)
+          ge.pop(indexC)
+    else:
+      run = False
+
+    draw_window(win,cars,timeCounter)
 
 
 
 
-    draw_window(win,car)
+def run(config_file):
+    # Load configuration.
+    config = neat.Config(neat.DefaultGenome, neat.DefaultReproduction,
+                         neat.DefaultSpeciesSet, neat.DefaultStagnation,
+                         config_file)
 
-main()
+    # Create the population, which is the top-level object for a NEAT run.
+    p = neat.Population(config)
+
+    # Add a stdout reporter to show progress in the terminal.
+    p.add_reporter(neat.StdOutReporter(True))
+    stats = neat.StatisticsReporter()
+    p.add_reporter(stats)
+    p.add_reporter(neat.Checkpointer(5))
+
+    # Run for up to 50 generations.
+    winner = p.run(trainingFunction, 10)
+
+    # Display the winning genome.
+    print('\nBest genome:\n{!s}'.format(winner))
+
+    #node_names = {-1:'A', -2: 'B', 0:'A XOR B'}
+    visualize.draw_net(config, winner, True)
+    visualize.plot_stats(stats, ylog=False, view=True)
+    visualize.plot_species(stats, view=True)
+
+if __name__ == '__main__':
+    # Determine path to configuration file. This path manipulation is
+    # here so that the script will run successfully regardless of the
+    # current working directory.
+    local_dir = os.path.dirname(__file__)
+    config_file = os.path.join(local_dir, 'config-feedforward.txt')
+    run(config_file)
