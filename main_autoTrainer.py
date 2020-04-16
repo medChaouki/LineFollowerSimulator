@@ -14,7 +14,7 @@ WIN_WIDTH = 700
 WIN_HEIGHT = 700
 
 CAR_IMG = pygame.transform.rotate(pygame.transform.scale(pygame.image.load(os.path.join("imgs","mustang.png")),(50,100)),-90)
-TRACK_IMG = pygame.transform.scale(pygame.image.load(os.path.join("imgs","BG.png")),(700,700))
+TRACK_IMG = pygame.transform.scale(pygame.image.load(os.path.join("imgs","Track1.png")),(700,700))
 
 END_OF_LINE_COLOR =(0,255,0,255)
 
@@ -337,7 +337,7 @@ def run(config_file):
     p.add_reporter(neat.Checkpointer(5))
 
     # Run for up to 50 generations.
-    winner = p.run(trainingFunction, 50)
+    winner = p.run(trainingFunction, 10)
 
     # Display the winning genome.
     print('\nBest genome:\n{!s}'.format(winner))
