@@ -237,7 +237,7 @@ class Car:
 
 def draw_window(win,car,timeValue):
   
-  text = STAT_FONT.render("Score: "+str(timeValue),1,(0,0,0))
+  text = STAT_FONT.render("Time in ms: "+str(int(timeValue*1000/FPS)),1,(0,0,0))
   
   win.blit(TRACK_IMG, (0, 0))
   win.blit(text, (10,10))
