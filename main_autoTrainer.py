@@ -28,6 +28,8 @@ MAX_TIME_IN_SECONDS = 10
 FPS = 30
 MAX_TIME = MAX_TIME_IN_SECONDS*(FPS) 
 
+GENERATION_COUNT =0
+
 class Car:
 
   def __init__(self,x,y):
@@ -235,12 +237,14 @@ class Car:
 
 
 
-def draw_window(win,cars,timeValue):
+def draw_window(win,cars,timeValue,gen):
   
   text = STAT_FONT.render("Time in ms: "+str(int(timeValue*1000/FPS)),1,(0,0,0))
+  textgen = STAT_FONT.render("Gen: "+str(gen),1,(0,0,0))
   
   win.blit(TRACK_IMG, (0, 0))
   win.blit(text, (10,10))
+  win.blit(textgen, (WIN_WIDTH-10 - textgen.get_width(),10))
   
 
   for car in cars:
@@ -251,12 +255,16 @@ def draw_window(win,cars,timeValue):
 
 
 def trainingFunction(genomes, config):
+  global GENERATION_COUNT
+  GENERATION_COUNT +=1
   win = pygame.display.set_mode((WIN_WIDTH,WIN_HEIGHT))
   clock = pygame.time.Clock()
   run = True
   ge=[]
   nets=[]
   cars=[]
+  tempGe=[]
+  tempNets=[]
   timeCounter = 0
 
   for _,g in genomes:
@@ -265,6 +273,8 @@ def trainingFunction(genomes, config):
     cars.append(Car(30,50))
     g.fitness = 0
     ge.append(g)
+    tempGe.append(g)
+    tempNets.append(net)
 
   while (run == True):
     clock.tick(FPS)
@@ -316,7 +326,15 @@ def trainingFunction(genomes, config):
     else:
       run = False
 
-    draw_window(win,cars,timeCounter)
+    draw_window(win,cars,timeCounter,GENERATION_COUNT)
+
+  bestFitness = tempGe[0].fitness
+  indexBestOfGen = 0
+  for tempIndex,gg in enumerate(tempGe):
+    if gg.fitness > bestFitness:
+      bestFitness = gg.fitness
+      indexBestOfGen = tempIndex
+  saveNet(tempNets[indexBestOfGen],GENERATION_COUNT)
 
 
 
@@ -352,6 +370,17 @@ def run(config_file):
 
       pickle.dump( winner_net, backupFile )
 
+
+def saveNet(net,genCount):
+  isDir =os.path.isdir("generationBackups")
+  if isDir == False:
+    os.mkdir("generationBackups")
+
+  fileName="backupFile"+str(genCount)
+  fullFileName = os.path.join("generationBackups", fileName)
+  with open (fullFileName,'wb') as backupFile :
+
+    pickle.dump( net, backupFile )
 
 if __name__ == '__main__':
     # Determine path to configuration file. This path manipulation is
