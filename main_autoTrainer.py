@@ -355,7 +355,7 @@ def run(config_file):
     p.add_reporter(neat.Checkpointer(5))
 
     # Run for up to 50 generations.
-    winner = p.run(trainingFunction, 50)
+    winner = p.run(trainingFunction, 10)
 
     # Display the winning genome.
     print('\nBest genome:\n{!s}'.format(winner))

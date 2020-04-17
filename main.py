@@ -14,7 +14,7 @@ WIN_WIDTH = 700
 WIN_HEIGHT = 700
 
 CAR_IMG = pygame.transform.rotate(pygame.transform.scale(pygame.image.load(os.path.join("imgs","mustang.png")),(50,100)),-90)
-TRACK_IMG = pygame.transform.scale(pygame.image.load(os.path.join("imgs","Track1.png")),(700,700))
+TRACK_IMG = pygame.transform.scale(pygame.image.load(os.path.join("imgs","Track2.png")),(700,700))
 
 END_OF_LINE_COLOR =(0,255,0,255)
 
