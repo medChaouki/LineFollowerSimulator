@@ -14,7 +14,7 @@ WIN_WIDTH = 700
 WIN_HEIGHT = 700
 
 CAR_IMG = pygame.transform.rotate(pygame.transform.scale(pygame.image.load(os.path.join("imgs","mustang.png")),(50,100)),-90)
-TRACK_IMG = pygame.transform.scale(pygame.image.load(os.path.join("imgs","Track2.png")),(700,700))
+TRACK_IMG = pygame.transform.scale(pygame.image.load(os.path.join("imgs","Track1.png")),(700,700))
 
 END_OF_LINE_COLOR =(0,255,0,255)
 
@@ -307,7 +307,11 @@ def simulationFunction(net):
 
 def run(config_file):
     # Load winner net
-    winner_backup = pickle.load( open( "backupFile", "rb" ) )
+    #genCount = 40
+    #fileName="backupFile"+str(genCount)
+    #fullFileName = os.path.join("generationBackups", fileName)
+    fullFileName= "backupFile"
+    winner_backup = pickle.load( open( fullFileName, "rb" ) )
     simulationFunction(winner_backup)
 
 

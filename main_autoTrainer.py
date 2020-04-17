@@ -20,7 +20,7 @@ END_OF_LINE_COLOR =(0,255,0,255)
 
 MAX_OUT_OF_LINE = 10
 
-OUT_OF_LINE_PENALTY = 1
+OUT_OF_LINE_PENALTY = 100
 
 FINISH_BONUS = 1000
 
@@ -334,7 +334,7 @@ def trainingFunction(genomes, config):
     if gg.fitness > bestFitness:
       bestFitness = gg.fitness
       indexBestOfGen = tempIndex
-  saveNet(tempNets[indexBestOfGen],GENERATION_COUNT)
+      saveNet(tempNets[indexBestOfGen],GENERATION_COUNT)
 
 
 
@@ -355,7 +355,7 @@ def run(config_file):
     p.add_reporter(neat.Checkpointer(5))
 
     # Run for up to 50 generations.
-    winner = p.run(trainingFunction, 100)
+    winner = p.run(trainingFunction, 50)
 
     # Display the winning genome.
     print('\nBest genome:\n{!s}'.format(winner))
