@@ -14,7 +14,7 @@ WIN_WIDTH = 700
 WIN_HEIGHT = 700
 
 CAR_IMG = pygame.transform.rotate(pygame.transform.scale(pygame.image.load(os.path.join("imgs","mustang.png")),(50,100)),-90)
-TRACK_IMG = pygame.transform.scale(pygame.image.load(os.path.join("imgs","Track1.png")),(WIN_WIDTH,WIN_HEIGHT))
+TRACK1_IMG = pygame.transform.scale(pygame.image.load(os.path.join("imgs","Track1.png")),(WIN_WIDTH,WIN_HEIGHT))
 
 END_OF_LINE_COLOR =(0,255,0,255)
 
@@ -46,9 +46,10 @@ class Car:
     self.lastDistance  =0
     self.nbOfOutOfLineDetection = 0
     self.isActive = True
+    self.isAlive = True
 
-  def outOfTrack(self):
-    trackRect =  TRACK_IMG.get_rect(topleft =(0,0))
+  def outOfTrack(self,currentTrack):
+    trackRect =  currentTrack.get_rect(topleft =(0,0))
     carRect = self.img.get_rect(topleft = ((self.x),(self.y)))
     carRect = carRect.inflate(12,12)
     if trackRect.contains(carRect) == True:
@@ -70,6 +71,14 @@ class Car:
 
   def deactivate(self):
 
+    self.isActive = False
+
+  def isTheCarAlive(self):
+
+    return self.isActive
+
+  def kill(self):
+    self.deactivate()
     self.isActive = False
 
   def rotateCar(self,rotAngle):
@@ -152,7 +161,7 @@ class Car:
     returnVal=int(x1),int(y1)
     return returnVal
 
-  def getCarSensorValue(self,sensorPosition):
+  def getCarSensorValue(self,sensorPosition,currentTrack):
     returnVal=0
     startX = sensorPosition[0]-3
     endX = sensorPosition[0]+3
@@ -160,24 +169,24 @@ class Car:
     endY = sensorPosition[1]+3
     for x in range(startX,endX):
       for y in range(startY,endY):
-        if (TRACK_IMG.get_at((x,y))==(0,0,0,255)):
+        if (currentTrack.get_at((x,y))==(0,0,0,255)):
           returnVal = 1
           break
 
     return returnVal
 
-  def isCarIsOutOfLine(self):
+  def isCarIsOutOfLine(self,currentTrack):
     returnVal = True
     for p in self.carSensorPositions:
-      if self.getCarSensorValue(p) == 1:
+      if self.getCarSensorValue(p,currentTrack) == 1:
         returnVal = False
         break
     return returnVal
 
-  def isCarIsAtTheFinishLine(self):
+  def isCarIsAtTheFinishLine(self,currentTrack):
     returnVal = False
     for p in self.carSensorPositions:
-      if (TRACK_IMG.get_at(p)== END_OF_LINE_COLOR):
+      if (currentTrack.get_at(p)== END_OF_LINE_COLOR):
         returnVal = True
         break
     return returnVal
@@ -237,12 +246,12 @@ class Car:
 
 
 
-def draw_window(win,cars,timeValue,gen):
+def draw_window(win,cars,timeValue,gen,currentTrack):
   
   text = STAT_FONT.render("Time in ms: "+str(int(timeValue*1000/FPS)),1,(0,0,0))
   textgen = STAT_FONT.render("Gen: "+str(gen),1,(0,0,0))
   
-  win.blit(TRACK_IMG, (0, 0))
+  win.blit(currentTrack, (0, 0))
   win.blit(text, (10,10))
   win.blit(textgen, (WIN_WIDTH-10 - textgen.get_width(),10))
   
@@ -259,6 +268,7 @@ def trainingFunction(genomes, config):
   GENERATION_COUNT +=1
   win = pygame.display.set_mode((WIN_WIDTH,WIN_HEIGHT))
   clock = pygame.time.Clock()
+  track = TRACK1_IMG
   run = True
   ge=[]
   nets=[]
@@ -293,27 +303,27 @@ def trainingFunction(genomes, config):
 
     if (len(cars)>0):
       for indexC,car in enumerate(cars):
-        if(car.outOfTrack()==True):
-          car.deactivate()
+        if(car.outOfTrack(track)==True):
+          car.kill()
         else:
-          output = nets[indexC].activate((car.getCarSensorValue(car.carSensorPositions[0]),
-                    car.getCarSensorValue(car.carSensorPositions[1]),
-                    car.getCarSensorValue(car.carSensorPositions[2]),
-                    car.getCarSensorValue(car.carSensorPositions[3]),
-                    car.getCarSensorValue(car.carSensorPositions[4])))
+          output = nets[indexC].activate((car.getCarSensorValue(car.carSensorPositions[0],track),
+                    car.getCarSensorValue(car.carSensorPositions[1],track),
+                    car.getCarSensorValue(car.carSensorPositions[2],track),
+                    car.getCarSensorValue(car.carSensorPositions[3],track),
+                    car.getCarSensorValue(car.carSensorPositions[4],track)))
           car.move(output[0]*10,output[1]*10)
           ge[indexC].fitness += car.getLastDistance()
 
-          if(car.outOfTrack()==True):
-            car.deactivate()
-          elif (car.isCarIsAtTheFinishLine()== True):
+          if(car.outOfTrack(track)==True):
+            car.kill()
+          elif (car.isCarIsAtTheFinishLine(track)== True):
             ge[indexC].fitness += FINISH_BONUS+(pow(MAX_TIME-timeCounter,2))
             car.deactivate()
-          elif (car.isCarIsOutOfLine() == True ):
+          elif (car.isCarIsOutOfLine(track) == True ):
             car.incrementOutOfLineDetection()
             ge[indexC].fitness -= OUT_OF_LINE_PENALTY
             if(car.getOutOfLineDetection()>MAX_OUT_OF_LINE):
-              car.deactivate()
+              car.kill()
           else:
             #do nothing
             pass
@@ -326,7 +336,7 @@ def trainingFunction(genomes, config):
     else:
       run = False
 
-    draw_window(win,cars,timeCounter,GENERATION_COUNT)
+    draw_window(win,cars,timeCounter,GENERATION_COUNT,track)
 
   bestFitness = tempGe[0].fitness
   indexBestOfGen = 0
