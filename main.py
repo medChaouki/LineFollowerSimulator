@@ -307,7 +307,7 @@ def simulationFunction(net):
 
 def run(config_file):
     # Load winner net
-    #genCount = 15
+    #genCount = 30
     #fileName="backupFile"+str(genCount)
     #fullFileName = os.path.join("generationBackups", fileName)
     fullFileName= "backupFile"

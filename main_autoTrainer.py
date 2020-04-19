@@ -17,6 +17,9 @@ CAR_IMG = pygame.transform.rotate(pygame.transform.scale(pygame.image.load(os.pa
 TRACK1_IMG = pygame.transform.scale(pygame.image.load(os.path.join("imgs","Track1.png")),(WIN_WIDTH,WIN_HEIGHT))
 TRACK2_IMG = pygame.transform.scale(pygame.image.load(os.path.join("imgs","Track2.png")),(WIN_WIDTH,WIN_HEIGHT))
 TRACK3_IMG = pygame.transform.scale(pygame.image.load(os.path.join("imgs","Track3.png")),(WIN_WIDTH,WIN_HEIGHT))
+TRACK4_IMG = pygame.transform.scale(pygame.image.load(os.path.join("imgs","Track4.png")),(WIN_WIDTH,WIN_HEIGHT))
+TRACK5_IMG = pygame.transform.scale(pygame.image.load(os.path.join("imgs","Track5.png")),(WIN_WIDTH,WIN_HEIGHT))
+TRACK6_IMG = pygame.transform.scale(pygame.image.load(os.path.join("imgs","Track6.png")),(WIN_WIDTH,WIN_HEIGHT))
 
 END_OF_LINE_COLOR =(0,255,0,255)
 
@@ -264,7 +267,7 @@ def draw_window(win,cars,timeValue,gen,currentTrack,trackIndex):
   
   text = STAT_FONT.render("Time in ms: "+str(int(timeValue*1000/FPS)),1,(0,0,0))
   textgen = STAT_FONT.render("Gen: "+str(gen),1,(0,0,0))
-  textTrack = STAT_FONT.render("track: "+str(trackIndex),1,(0,0,0))
+  textTrack = STAT_FONT.render("track: "+str(trackIndex+1),1,(0,0,0))
   
   win.blit(currentTrack, (0, 0))
   win.blit(text, (10,10))
@@ -286,7 +289,7 @@ def trainingFunction(genomes, config):
   GENERATION_COUNT +=1
   win = pygame.display.set_mode((WIN_WIDTH,WIN_HEIGHT))
   clock = pygame.time.Clock()
-  tracks = [TRACK1_IMG,TRACK2_IMG,TRACK3_IMG]
+  tracks = [TRACK1_IMG,TRACK2_IMG,TRACK3_IMG,TRACK4_IMG,TRACK5_IMG,TRACK6_IMG]
   trackIndex = 0
   run = True
   ge=[]
@@ -398,7 +401,7 @@ def run(config_file):
     p.add_reporter(neat.Checkpointer(5))
 
     # Run for up to 50 generations.
-    winner = p.run(trainingFunction, 30)
+    winner = p.run(trainingFunction, 50)
 
     # Display the winning genome.
     print('\nBest genome:\n{!s}'.format(winner))
